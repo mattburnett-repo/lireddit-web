@@ -17,7 +17,6 @@ const errorExchange: Exchange = ({ forward }) => (ops$) => {
 };
 
 import { stringifyVariables } from '@urql/core';
-import { introspectionFromSchema } from "graphql";
 
 export type MergeMode = 'before' | 'after';
 
@@ -43,18 +42,28 @@ const cursorPagination = (): Resolver => {
     }
 
     const fieldKey = `${fieldName}(${stringifyVariables(fieldArgs)})`
-    const isItInTheCache = cache.resolveFieldByKey(entityKey, fieldKey)
+    const isItInTheCache = cache.resolve(cache.resolveFieldByKey(entityKey, fieldKey) as string, 'posts')
     console.log('isItInTheCache: ', isItInTheCache)
     info.partial = !isItInTheCache
+    let hasMore = true
 
     const results: string[] = []
-    fieldInfos.forEach(fi => {
-      const data = cache.resolveFieldByKey(entityKey, fi.fieldKey) as string[]
-      console.log(data)
+    fieldInfos.forEach((fi) => {
+      const key = cache.resolveFieldByKey(entityKey, fi.fieldKey) as string
+      const data = cache.resolve(key, 'posts') as string[]
+      const _hasMore = cache.resolve(key, 'hasMore')
+      if (!_hasMore) {
+        hasMore = _hasMore as boolean
+      }
+      console.log('data: ', hasMore, data)
       results.push(...data)
     })
 
-    return results
+    return {
+      __typename: "PaginatedPosts",
+      hasMore,
+      posts: results
+    }
 
     //   const visited = new Set();
     //   let result: NullArray<string> = [];
@@ -118,6 +127,9 @@ export const createUrqlClient = (ssrExchange: any) => ({
   exchanges: [
     dedupExchange,
     cacheExchange({
+      keys: {
+        PaginatedPosts: () => null
+      },
       resolvers: {
         Query: {
           posts: cursorPagination()
