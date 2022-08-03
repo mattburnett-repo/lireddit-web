@@ -39,7 +39,7 @@ const cursorPagination = (): Resolver => {
 
     const fieldKey = `${fieldName}(${stringifyVariables(fieldArgs)})`
     const isItInTheCache = cache.resolve(cache.resolveFieldByKey(entityKey, fieldKey) as string, 'posts')
-    console.log('isItInTheCache: ', isItInTheCache)
+    // console.log('isItInTheCache: ', isItInTheCache)
     info.partial = !isItInTheCache
     let hasMore = true
 
@@ -51,7 +51,7 @@ const cursorPagination = (): Resolver => {
       if (!_hasMore) {
         hasMore = _hasMore as boolean
       }
-      console.log('data: ', hasMore, data)
+      // console.log('data: ', hasMore, data)
       results.push(...data)
     })
 
@@ -140,21 +140,26 @@ export const createUrqlClient = (ssrExchange: any) => ({
                 fragment _ on Post {
                   id 
                   points
+                  voteStatus
                 }
               `,
               { id: postId } as any
             )
 
             if (data) {
-              const newPoints = (data.points as number) + value
+              if (data.voteStatus === value) {
+                return
+              }
+              const newPoints = (data.points as number) + ((!data.voteStatus) ? 1 : 2 * value)
 
               cache.writeFragment(
                 gql`
                   fragment __ on Post {
                     points
+                    voteStatus
                   }
                 `,
-                { id: postId, points: newPoints } as any
+                { id: postId, points: newPoints, voteStatus: value } as any
               )
             }
           },
