@@ -5,7 +5,7 @@ import { useState } from "react";
 import { EditDeletePostButtons } from "../components/EditDeletePostButtons";
 import { Layout } from "../components/Layout";
 import { UpdootSection } from "../components/UpdootSection";
-import { usePostsQuery, useUpdatePostMutation } from "../generated/graphql";
+import { usePostsQuery } from "../generated/graphql";
 import { createUrqlClient } from "../utils/creatUrqlClient";
 
 const Index = () => {
@@ -18,7 +18,7 @@ const Index = () => {
     variables,
   });
 
-  const [, updatePost] = useUpdatePostMutation();
+  // const [, updatePost] = useUpdatePostMutation();
 
   if (!fetching && !data) {
     return (
